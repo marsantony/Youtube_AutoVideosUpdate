@@ -176,7 +176,7 @@
                 log(data);
                 ytCurrentCommandReply = ''; //每次清空
                 data['items'].forEach(function (item, index) {
-                    ytCurrentCommandReply += ` 🎥${item['snippet']['title']} ➤ https://www.youtube.com/watch?v=${item['snippet']['resourceId']['videoId']}`;
+                    ytCurrentCommandReply += ` 🎥${item['snippet']['title']} ➤ https://youtu.be/${item['snippet']['resourceId']['videoId']}`;
                 });
             } catch (error) {
                 console.error('Error:', error);
