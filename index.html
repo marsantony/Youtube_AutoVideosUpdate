@@ -1,0 +1,331 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+    <!--Avoid timers throttling by browser when tab is inactive.-->
+    <script src="./js/HackTimer.min.js"></script>
+    <script src="./js/HackTimerWorker.min.js"></script>
+
+    <title>自動更新YT最新影片</title>
+
+    <style>
+
+        #showJWTPlaceImage > img {
+            display: none;
+        }
+
+        #showJWTPlaceImage:hover > img {
+            display: block;
+            position: absolute;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="https://marsantony.github.io/">Mars Liu</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavDropdown">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/TwitchSelfReply">Twitch自動回覆(用自己的帳號)</a>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            蝦愛橘子相關
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                            <li><a class="dropdown-item" href="/Twitch_AutoGameStatusUpdate">!遊戲指令更新</a></li>
+                            <li><a class="dropdown-item" href="/Youtube_AutoVideosUpdate">!YT指令更新</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+
+    <div class="mx-auto col-10 col-md-8 col-lg-6">
+        <br />
+        <br />
+        <div class="form-group" id="AlertBox">
+            <div class="alert alert-success" id="successAlert" style="display:none;">
+
+            </div>
+
+            <div class="alert alert-danger" id="errorAlert" style="display:none;">
+
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="JWTKey">StreamElements JWT金鑰</label>
+            <i class="bi bi-info-circle" id="showJWTPlaceImage"><img src="./images/image.png" width="700" /></i>
+            <a class="link-info" href="https://streamelements.com/dashboard/account/channels" target="_blank">StreamElements取得JWT金鑰連結</a>
+            <input type="password" id="JWTKey" class="form-control col-1" />
+
+        </div>
+
+        <div class="form-group">
+            <label for="youtubeKey">Youtube金鑰</label>
+            <input type="password" id="youtubeKey" class="form-control" />
+        </div>
+
+        <div class="form-group">
+            <label for="videoCount">影片個數</label>
+            <input type="text" id="videoCount" class="form-control" value="1" />
+        </div>
+        <br />
+        <div class="form-group" style="text-align:right;">
+            <input type="button" id="ImmediatelyUpdate" class="btn btn-primary" value="立即更新" />
+            <input type="button" id="FirstStartAutoUpdate" class="btn btn-primary" value="開始自動更新" />
+            <button class="btn btn-primary" type="button" id="loading" disabled style="display:none;">
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                <span id="nextUpdateStamp">Loading...</span>
+            </button>
+            <input type="button" id="StartAutoUpdate" class="btn btn-primary" value="開始自動更新" style="display:none;" />
+            <input type="button" id="stopAutoUpdate" class="btn btn-danger" value="停止自動更新" style="display:none;" />
+        </div>
+
+        <div class="form-group">
+            <label for="currentYoutubeReply">Youtube依照最新影片數的回應:</label>
+            <span id="currentYoutubeReply"></span>
+        </div>
+        <div class="form-group">
+            <label for="log">執行的所有LOG紀錄(重新整理就會不見)</label>
+            <textarea id="log" class="form-control" rows="10" style="resize: none;" readonly></textarea>
+        </div>
+    </div>
+
+
+    <!-- Option 1: Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
+    <script src="https://github.com/tmijs/tmi.js/releases/download/v1.8.5/tmi.min.js"></script>
+
+    <script>
+
+        const LOCALSTORAGE_JWTKEY = 'Youtube_AutoVideosUpdate_JWTKey';
+        const LOCALSTORAGE_YOUTUBEKEY = 'Youtube_AutoVideosUpdate_YoutubeKey';
+
+        //將預設值帶入
+        document.getElementById('JWTKey').value = localStorage.getItem(LOCALSTORAGE_JWTKEY) || '';
+        document.getElementById('youtubeKey').value = localStorage.getItem(LOCALSTORAGE_YOUTUBEKEY) || '';
+
+        const log = (message) => {
+            var currentStamp = new Date().toLocaleString();
+            console.log(currentStamp);
+            console.log(message);
+            document.getElementById('log').value = `${currentStamp}:${JSON.stringify(message)}\r\n${document.getElementById('log').value}`;
+        };
+
+        const showError = (message) => {
+            document.getElementById('successAlert').innerHTML = '';
+            document.getElementById('successAlert').style.display = 'none';
+
+            document.getElementById('errorAlert').innerHTML = message;
+            document.getElementById('errorAlert').style.display = '';
+        };
+
+        const showSuccess = (message) => {
+            document.getElementById('errorAlert').innerHTML = '';
+            document.getElementById('errorAlert').style.display = 'none';
+
+            document.getElementById('successAlert').innerHTML = message;
+            document.getElementById('successAlert').style.display = '';
+        };
+
+        const channelId = '5d29b4d31deb300a0518a503';
+        const updateCommandId = '64cfe4796b4f2ba47f03cd3d';
+
+        var errorMsg = '';
+        var ytCurrentCommandReply = '';
+        var mainInterval;
+
+        //取得Youtube最新Video資訊
+        const getYoutubeLatestVideos = async () => {
+
+            try {
+                log('取得Youtube最新Video資訊');
+                let videoCount = parseInt(document.getElementById('videoCount').value, 10) || 1;
+                if (videoCount <= 0 || videoCount > 5) {
+                    throw new Error(`影片個數不正確:${videoCount}`);
+                }
+                let response = await fetch(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=${videoCount}&playlistId=UULkKU_1n2UjZUCrz6zFKzAQ&key=${document.getElementById('youtubeKey').value}`);
+                console.log(response);
+                if (!response.ok) {
+                    throw new Error(`${response.status}:${response.statusText}`);
+                }
+                let data = await response.json();
+                log(data);
+                ytCurrentCommandReply = ''; //每次清空
+                data['items'].forEach(function (item, index) {
+                    ytCurrentCommandReply += ` 🎥${item['snippet']['title']} ➤ https://www.youtube.com/watch?v=${item['snippet']['resourceId']['videoId']}`;
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                errorMsg = `無法取得Youtube最新Video資訊`;
+
+                throw error;
+            }
+        };
+
+        //取得目前指令的內容
+        const getStreamelementsCommand = async () => {
+            try {
+                log('取得目前指令的內容');
+                let response = await fetch(`https://api.streamelements.com/kappa/v2/bot/commands/${channelId}/${updateCommandId}`, {
+                    headers: {
+                        'Accept': 'application/json; charset=utf-8, application/json',
+                        'Authorization': `Bearer ${document.getElementById('JWTKey').value}`
+                    }
+                });
+                console.log(response);
+                if (!response.ok) {
+                    throw new Error(`${response.status}:${response.statusText}`);
+                }
+                let data = await response.json();
+                log(data);
+                return data;
+            } catch (error) {
+                console.error('Error:', error);
+                errorMsg = `無法取得目前指令的內容`;
+
+                throw error;
+            }
+        };
+
+        //更新目前指令的內容
+        const updateStreamelementsCommand = async (commandJson) => {
+            try {
+                log('更新目前指令的內容');
+                let response = await fetch(`https://api.streamelements.com/kappa/v2/bot/commands/${channelId}/${updateCommandId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Accept': 'application/json; charset=utf-8, application/json',
+                        'Authorization': `Bearer ${document.getElementById('JWTKey').value}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(commandJson),
+                });
+                console.log(response);
+                if (!response.ok) {
+                    throw new Error(`${response.status}:${response.statusText}`);
+                }
+                let data = await response.json();
+                log(data);
+
+                return data;
+            } catch (error) {
+                console.error('Error:', error);
+                errorMsg = `無法更新目前指令的內容`;
+
+                throw error;
+            }
+        }
+
+        //完整流程
+        const mainProcess = async () => {
+            try {
+                log('完整流程開始');
+
+                //取得Youtube最新Video資訊，並組成回應字串
+                await getYoutubeVideos();
+
+                //顯示在畫面上
+                document.getElementById('currentYoutubeReply').innerHTML = ytCurrentCommandReply;
+
+                //回應字串為空，不處理
+                if (!ytCurrentCommandReply)
+                    return;
+
+                let commandJson = await getStreamelementsCommand();
+                let commandReply = commandJson['reply'];
+
+                //遊戲名稱一致，不用改
+                if (ytCurrentCommandReply === commandReply)
+                    return;
+
+                //修改遊戲名稱
+                commandJson['reply'] = ytCurrentCommandReply;
+
+                //更新指令內容
+                await updateStreamelementsCommand(commandJson); //不知道為啥要更新兩次聊天室才能正常= =
+                let updatedCommandJson = await updateStreamelementsCommand(commandJson);
+
+                showSuccess(`更新成功<br/>${updatedCommandJson['reply']}`);
+            } catch (error) {
+                showError(`${errorMsg}<br/>給開發者的錯誤訊息內容${error}`);
+            }
+            finally {
+                log('完整流程結束');
+            }
+        };
+
+        var currentGameName = '';
+        var isEnable = false;
+
+        document.getElementById('ImmediatelyUpdate').addEventListener('click', async (e) => {
+
+            //將預設值寫入localStorage
+            localStorage.setItem(LOCALSTORAGE_JWTKEY, document.getElementById('JWTKey').value);
+            localStorage.setItem(LOCALSTORAGE_YOUTUBEKEY, document.getElementById('youtubeKey').value);
+
+            await mainProcess();
+        });
+
+        document.getElementById('FirstStartAutoUpdate').addEventListener('click', (e) => {
+
+            //將預設值寫入localStorage
+            localStorage.setItem(LOCALSTORAGE_JWTKEY, document.getElementById('JWTKey').value);
+            localStorage.setItem(LOCALSTORAGE_YOUTUBEKEY, document.getElementById('youtubeKey').value);
+
+            document.getElementById('FirstStartAutoUpdate').style.display = 'none';
+            document.getElementById('StartAutoUpdate').style.display = 'none';
+            document.getElementById('stopAutoUpdate').style.display = 'none';
+
+            document.getElementById('StartAutoUpdate').click();
+        });
+
+        document.getElementById('StartAutoUpdate').addEventListener('click', async (e) => {
+            document.getElementById('loading').style.display = '';
+
+            document.getElementById('StartAutoUpdate').style.display = 'none';
+
+            //每2分鐘跑一次
+            const runMainProcess = async () => {
+                await mainProcess();
+                mainInterval = setTimeout(runMainProcess, 120000);
+            };
+            await runMainProcess();
+
+            document.getElementById('FirstStartAutoUpdate').style.display = 'none';
+            document.getElementById('StartAutoUpdate').style.display = 'none';
+            document.getElementById('stopAutoUpdate').style.display = '';
+
+            document.getElementById('loading').style.display = 'none';
+        });
+
+        document.getElementById('stopAutoUpdate').addEventListener('click', (e) => {
+            //停下來
+            clearTimeout(mainInterval);
+
+            document.getElementById('FirstStartAutoUpdate').style.display = 'none';
+            document.getElementById('StartAutoUpdate').style.display = '';
+            document.getElementById('stopAutoUpdate').style.display = 'none';
+        });
+    </script>
+</body>
+
+</html>
