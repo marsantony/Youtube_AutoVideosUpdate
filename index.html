@@ -130,6 +130,11 @@
             document.getElementById('log').value = `${currentStamp}:${JSON.stringify(message)}\r\n${document.getElementById('log').value}`;
         };
 
+        const hideAll = () => {
+            document.getElementById('successAlert').style.display = 'none';
+            document.getElementById('errorAlert').style.display = 'none';
+        };
+
         const showError = (message) => {
             document.getElementById('successAlert').innerHTML = '';
             document.getElementById('successAlert').style.display = 'none';
@@ -240,6 +245,8 @@
             try {
                 log('完整流程開始');
 
+                hideAll();  //隱藏上次的成功與失敗訊息
+
                 //取得Youtube最新Video資訊，並組成回應字串
                 await getYoutubeVideos();
 
@@ -303,18 +310,21 @@
 
             document.getElementById('StartAutoUpdate').style.display = 'none';
 
-            //每2分鐘跑一次
+            let autoUpdateDurationByDays = 1;
+
+            //每1天跑一次
             const runMainProcess = async () => {
                 await mainProcess();
-                mainInterval = setTimeout(runMainProcess, 120000);
+                let now = new Date();
+                now.setDate(now.getDate() + autoUpdateDurationByDays);
+                document.getElementById('nextUpdateStamp').innerHTML = `下次自動更新時間：${now.toLocaleString()}`;
+                mainInterval = setTimeout(runMainProcess,  autoUpdateDurationByDays * 24 * 60 * 60 * 1000);
             };
             await runMainProcess();
 
             document.getElementById('FirstStartAutoUpdate').style.display = 'none';
             document.getElementById('StartAutoUpdate').style.display = 'none';
             document.getElementById('stopAutoUpdate').style.display = '';
-
-            document.getElementById('loading').style.display = 'none';
         });
 
         document.getElementById('stopAutoUpdate').addEventListener('click', (e) => {
@@ -324,6 +334,9 @@
             document.getElementById('FirstStartAutoUpdate').style.display = 'none';
             document.getElementById('StartAutoUpdate').style.display = '';
             document.getElementById('stopAutoUpdate').style.display = 'none';
+
+            document.getElementById('nextUpdateStamp').innerHTML = 'Loading...';
+            document.getElementById('loading').style.display = 'none';
         });
     </script>
 </body>
