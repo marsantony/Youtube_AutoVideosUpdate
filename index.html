@@ -15,8 +15,8 @@
     <script src="./js/HackTimerWorker.min.js"></script>
 
     <title>自動更新YT最新影片</title>
-
-    <style>
+    <link rel="stylesheet" href="https://marsantony.github.io/shared/nav.css">
+    <style>body { padding-top: 56px; }
 
         #showJWTPlaceImage > img {
             display: none;
@@ -30,31 +30,6 @@
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="https://marsantony.github.io/">Mars Liu</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNavDropdown">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/TwitchSelfReply">Twitch自動回覆(用自己的帳號)</a>
-                    </li>
-
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            蝦愛橘子相關
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                            <li><a class="dropdown-item" href="/Twitch_AutoGameStatusUpdate">!遊戲指令更新</a></li>
-                            <li><a class="dropdown-item" href="/Youtube_AutoVideosUpdate">!YT指令更新</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
 
 
     <div class="mx-auto col-10 col-md-8 col-lg-6">
@@ -114,6 +89,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
     <script src="https://github.com/tmijs/tmi.js/releases/download/v1.8.5/tmi.min.js"></script>
 
+    <script src="https://marsantony.github.io/shared/nav.js"></script>
     <script>
 
         const LOCALSTORAGE_JWTKEY = 'Youtube_AutoVideosUpdate_JWTKey';
