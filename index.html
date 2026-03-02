@@ -90,7 +90,8 @@
     <script src="https://github.com/tmijs/tmi.js/releases/download/v1.8.5/tmi.min.js"></script>
 
     <script src="https://marsantony.github.io/shared/shared.js"></script>
-    <script>
+    <script type="module">
+        import { buildYoutubeReplyString, parseVideoCount, needsUpdate, buildYoutubeApiUrl } from './src/youtube-utils.js';
 
         const LOCALSTORAGE_JWTKEY = 'Youtube_AutoVideosUpdate_JWTKey';
         const LOCALSTORAGE_YOUTUBEKEY = 'Youtube_AutoVideosUpdate_YoutubeKey';
@@ -139,21 +140,16 @@
 
             try {
                 log('取得Youtube最新Video資訊');
-                let videoCount = parseInt(document.getElementById('videoCount').value, 10) || 1;
-                if (videoCount <= 0 || videoCount > 5) {
-                    throw new Error(`影片個數不正確:${videoCount}`);
-                }
-                let response = await fetch(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=${videoCount}&playlistId=UULkKU_1n2UjZUCrz6zFKzAQ&key=${document.getElementById('youtubeKey').value}`);
+                let videoCount = parseVideoCount(document.getElementById('videoCount').value);
+                let apiUrl = buildYoutubeApiUrl(document.getElementById('youtubeKey').value, videoCount, 'UULkKU_1n2UjZUCrz6zFKzAQ');
+                let response = await fetch(apiUrl);
                 console.log(response);
                 if (!response.ok) {
                     throw new Error(`${response.status}:${response.statusText}`);
                 }
                 let data = await response.json();
                 log(data);
-                ytCurrentCommandReply = ''; //每次清空
-                data['items'].forEach(function (item, index) {
-                    ytCurrentCommandReply += ` 🎥${item['snippet']['title']} ➤ https://youtu.be/${item['snippet']['resourceId']['videoId']}`;
-                });
+                ytCurrentCommandReply = buildYoutubeReplyString(data['items']);
             } catch (error) {
                 console.error('Error:', error);
                 errorMsg = `無法取得Youtube最新Video資訊`;
@@ -229,18 +225,14 @@
                 //顯示在畫面上
                 document.getElementById('currentYoutubeReply').innerHTML = ytCurrentCommandReply;
 
-                //回應字串為空，不處理
-                if (!ytCurrentCommandReply)
-                    return;
-
                 let commandJson = await getStreamelementsCommand();
                 let commandReply = commandJson['reply'];
 
-                //遊戲名稱一致，不用改
-                if (ytCurrentCommandReply === commandReply)
+                //內容一致，不用改
+                if (!needsUpdate(commandReply, ytCurrentCommandReply))
                     return;
 
-                //修改遊戲名稱
+                //修改回應內容
                 commandJson['reply'] = ytCurrentCommandReply;
 
                 //更新指令內容
@@ -255,9 +247,6 @@
                 log('完整流程結束');
             }
         };
-
-        var currentGameName = '';
-        var isEnable = false;
 
         document.getElementById('ImmediatelyUpdate').addEventListener('click', async (e) => {
 
