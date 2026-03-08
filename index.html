@@ -352,12 +352,12 @@
     <script type="module">
         import { buildYoutubeReplyString, parseVideoCount, needsUpdate, buildYoutubeApiUrl } from './src/youtube-utils.js';
 
-        const LOCALSTORAGE_JWTKEY = 'Youtube_AutoVideosUpdate_JWTKey';
-        const LOCALSTORAGE_YOUTUBEKEY = 'Youtube_AutoVideosUpdate_YoutubeKey';
-        const LOCALSTORAGE_CHANNEL = 'Youtube_AutoVideosUpdate_Channel';
-        const LOCALSTORAGE_CUSTOM_SE_CHANNEL = 'Youtube_AutoVideosUpdate_CustomSeChannel';
-        const LOCALSTORAGE_CUSTOM_SE_COMMAND = 'Youtube_AutoVideosUpdate_CustomSeCommand';
-        const LOCALSTORAGE_CUSTOM_PLAYLIST = 'Youtube_AutoVideosUpdate_CustomPlaylist';
+        const STORAGE_JWTKEY = 'Youtube_AutoVideosUpdate_JWTKey';
+        const STORAGE_YOUTUBEKEY = 'Youtube_AutoVideosUpdate_YoutubeKey';
+        const STORAGE_CHANNEL = 'Youtube_AutoVideosUpdate_Channel';
+        const STORAGE_CUSTOM_SE_CHANNEL = 'Youtube_AutoVideosUpdate_CustomSeChannel';
+        const STORAGE_CUSTOM_SE_COMMAND = 'Youtube_AutoVideosUpdate_CustomSeCommand';
+        const STORAGE_CUSTOM_PLAYLIST = 'Youtube_AutoVideosUpdate_CustomPlaylist';
 
         // DOM 快取
         const channelEl = document.getElementById('channel');
@@ -379,13 +379,13 @@
         const loadingEl = document.getElementById('loading');
         const nextUpdateStampEl = document.getElementById('nextUpdateStamp');
 
-        // 將預設值帶入
-        jwtKeyEl.value = localStorage.getItem(LOCALSTORAGE_JWTKEY) || '';
-        youtubeKeyEl.value = localStorage.getItem(LOCALSTORAGE_YOUTUBEKEY) || '';
-        channelEl.value = localStorage.getItem(LOCALSTORAGE_CHANNEL) || channelEl.value;
-        customSeChannelEl.value = localStorage.getItem(LOCALSTORAGE_CUSTOM_SE_CHANNEL) || '';
-        customSeCommandEl.value = localStorage.getItem(LOCALSTORAGE_CUSTOM_SE_COMMAND) || '';
-        customPlaylistEl.value = localStorage.getItem(LOCALSTORAGE_CUSTOM_PLAYLIST) || '';
+        // 將預設值帶入（JWT/API Key 用 sessionStorage，其餘用 localStorage）
+        jwtKeyEl.value = sessionStorage.getItem(STORAGE_JWTKEY) || '';
+        youtubeKeyEl.value = sessionStorage.getItem(STORAGE_YOUTUBEKEY) || '';
+        channelEl.value = localStorage.getItem(STORAGE_CHANNEL) || channelEl.value;
+        customSeChannelEl.value = localStorage.getItem(STORAGE_CUSTOM_SE_CHANNEL) || '';
+        customSeCommandEl.value = localStorage.getItem(STORAGE_CUSTOM_SE_COMMAND) || '';
+        customPlaylistEl.value = localStorage.getItem(STORAGE_CUSTOM_PLAYLIST) || '';
 
         // 頻道切換
         const updateCustomFields = () => {
@@ -543,12 +543,12 @@
         };
 
         const saveSettings = () => {
-            localStorage.setItem(LOCALSTORAGE_JWTKEY, jwtKeyEl.value);
-            localStorage.setItem(LOCALSTORAGE_YOUTUBEKEY, youtubeKeyEl.value);
-            localStorage.setItem(LOCALSTORAGE_CHANNEL, channelEl.value);
-            localStorage.setItem(LOCALSTORAGE_CUSTOM_SE_CHANNEL, customSeChannelEl.value);
-            localStorage.setItem(LOCALSTORAGE_CUSTOM_SE_COMMAND, customSeCommandEl.value);
-            localStorage.setItem(LOCALSTORAGE_CUSTOM_PLAYLIST, customPlaylistEl.value);
+            sessionStorage.setItem(STORAGE_JWTKEY, jwtKeyEl.value);
+            sessionStorage.setItem(STORAGE_YOUTUBEKEY, youtubeKeyEl.value);
+            localStorage.setItem(STORAGE_CHANNEL, channelEl.value);
+            localStorage.setItem(STORAGE_CUSTOM_SE_CHANNEL, customSeChannelEl.value);
+            localStorage.setItem(STORAGE_CUSTOM_SE_COMMAND, customSeCommandEl.value);
+            localStorage.setItem(STORAGE_CUSTOM_PLAYLIST, customPlaylistEl.value);
         };
 
         immediatelyUpdateEl.addEventListener('click', async () => {
